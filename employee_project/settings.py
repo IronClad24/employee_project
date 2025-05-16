@@ -16,7 +16,7 @@ DEBUG = env('DEBUG')
 SECRET_KEY = env('SECRET_KEY')
 
 # Allowed Hosts - should include your domain or Render/Railway hostname
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 # Database configuration
 DATABASES = {
