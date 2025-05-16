@@ -5,6 +5,7 @@
         "bcbg",
         "djangorestframework",
         "filterset",
+        "gunicorn",
         "isort",
         "levelname",
         "lzpr",
