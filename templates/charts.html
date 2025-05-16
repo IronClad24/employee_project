@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>📊 Employee Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h2, h3 {
+      text-align: center;
+      color: #333;
+    }
+    .chart-container {
+      width: 80%;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #totalCount {
+      text-align: center;
+      display: block;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    select {
+      margin: 10px 0;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📊 Employee Analytics Dashboard</h2>
+
+  <!-- Employees per Department Chart -->
+  <div class="chart-container">
+    <h3>Employees per Department</h3>
+    <span id="totalCount">Total Employees: loading...</span>
+    <canvas id="deptChart"></canvas>
+  </div>
+
+  <!-- Monthly Attendance Chart -->
+  <div class="chart-container">
+    <h3>Monthly Attendance Overview</h3>
+    <label for="departmentFilter">Filter by Department: </label>
+    <select id="departmentFilter">
+      <option value="">All Departments</option>
+    </select>
+    <canvas id="attendanceChart"></canvas>
+  </div>
+
+  <script>
+    // Load department list for dropdown
+    fetch('/api/charts/departments/')
+      .then(res => res.json())
+      .then(departments => {
+        const select = document.getElementById('departmentFilter');
+        departments.forEach(dept => {
+          const option = document.createElement('option');
+          option.value = dept.id;
+          option.textContent = dept.name;
+          select.appendChild(option);
+        });
+      });
+
+    // Render department chart and total
+    fetch('/api/charts/employees-per-department/')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("totalCount").textContent = `Total Employees: ${data.total ?? 0}`;
+        const ctx = document.getElementById('deptChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: 'Employees',
+              data: data.counts,
+              backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
+              borderColor: '#fff',
+              borderWidth: 1
+            }]
+          }
+        });
+      })
+      .catch(() => {
+        document.getElementById("totalCount").textContent = `Total Employees: error`;
+      });
+
+    // Attendance chart setup
+    let attendanceChart;
+    function loadAttendance(departmentId = '') {
+      let url = '/api/charts/monthly-attendance/';
+      if (departmentId) {
+        url += `?department_id=${departmentId}`;
+      }
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const ctx = document.getElementById('attendanceChart').getContext('2d');
+          if (attendanceChart) attendanceChart.destroy();
+          attendanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: data.labels,
+              datasets: [
+                {
+                  label: 'Present',
+                  data: data.present,
+                  backgroundColor: '#28a745'
+                },
+                {
+                  label: 'Absent',
+                  data: data.absent,
+                  backgroundColor: '#dc3545'
+                },
+                {
+                  label: 'Late',
+                  data: data.late,
+                  backgroundColor: '#ffc107'
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        });
+    }
+
+    document.getElementById('departmentFilter').addEventListener('change', function () {
+      const deptId = this.value;
+      loadAttendance(deptId);
+    });
+
+    // Initial attendance load (all)
+    loadAttendance();
+  </script>
+
+</body>
+</html>

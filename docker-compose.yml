@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: employee_db
+      POSTGRES_USER: django_user
+      POSTGRES_PASSWORD: django_pass
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_data &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=1
+      - DB_NAME=employee_db
+      - DB_USER=django_user
+      - DB_PASSWORD=django_pass
+      - DB_HOST=db
+      - DB_PORT=5432
+      - SECRET_KEY=your-secret-key
+      - ALLOWED_HOSTS=*
+
+volumes:
+  postgres_data:
